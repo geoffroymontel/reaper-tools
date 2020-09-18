@@ -1,0 +1,258 @@
+desc:OB6 NRPN to OSC
+// author:Geoffroy Montel
+// slider1:input_midi_channel=0<0,15,1{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}>MIDI input channel
+
+in_pin:none
+out_pin:none
+
+@init
+// state machine
+// 0 : waiting for NRPN
+// 1 : NRPN number (MSB part) received
+// 2 : NRPN number (full, included LSB part) received
+// 3 : NRPN value (MSB part) received
+// 4 : NRPN value (full, included LSB part) received
+state=0;
+// NRPN number
+nrpn_number=0;
+// NRPN value
+nrpn_value=0;
+
+// functions
+
+// scale a value from a given range to another range
+// returns the scaled value
+function linlin(value,in_min,in_max,out_min,out_max)
+(
+  value <= in_min ? out_min :
+  value >= in_max ? out_max :
+  floor((value - in_min) / (in_max - in_min) * (out_max - out_min) + out_min);
+);
+
+// send the right midi cc according to the nrpn number and scale the nrpn value to 0-127
+function send_right_midi_cc(offset,channel,nrpn_number,nrpn_value)
+(
+  msg = $xB0+channel; // midi cc
+  // VCO 1 freq -> CC 3
+  nrpn_number == 0 ? (
+    midisend(offset,msg,3,linlin(nrpn_value,0,60,0,127))
+  ) :
+  // VCO 1 Level -> CC 9
+  nrpn_number == 2 ? (
+    midisend(offset,msg,9,linlin(nrpn_value,0,127,0,127))
+  ) :
+  // VCO 1 Shape -> CC 14
+  nrpn_number == 3 ? (
+    midisend(offset,msg,14,linlin(nrpn_value,0,255,0,127))
+  ) :
+  // VCO 1 Pulse Width -> CC 15
+  nrpn_number == 4 ? (
+    midisend(offset,msg,15,linlin(nrpn_value,0,255,0,127))
+  ) :
+  // VCO 2 Freq -> CC 20
+  nrpn_number == 5 ? (
+    midisend(offset,msg,20,linlin(nrpn_value,0,60,0,127))
+  ) :
+  // VCO 2 Freq Fine -> CC 21
+  nrpn_number == 6 ? (
+    midisend(offset,msg,21,linlin(nrpn_value,0,254,0,127))
+  ) :
+  // VCO 2 Level -> CC 22
+  nrpn_number == 7 ? (
+    midisend(offset,msg,22,linlin(nrpn_value,0,127,0,127))
+  ) :
+  // VCO 2 Shape -> CC 23
+  nrpn_number == 8 ? (
+    midisend(offset,msg,23,linlin(nrpn_value,0,254,0,127))
+  ) :
+  // VCO 2 Pulse Width -> CC 24
+  nrpn_number == 9 ? (
+    midisend(offset,msg,24,linlin(nrpn_value,0,255,0,127))
+  ) :
+  // VCO 1 Sub Level -> CC 25
+  nrpn_number == 27 ? (
+    midisend(offset,msg,25,linlin(nrpn_value,0,127,0,127))
+  ) :
+  // Portamento On/Off -> CC 26
+  nrpn_number == 29 ? (
+    midisend(offset,msg,26,linlin(nrpn_value,0,1,0,127))
+  ) :
+  // Portamento Rate -> CC 27  
+  nrpn_number == 30 ? (
+    midisend(offset,msg,27,linlin(nrpn_value,0,127,0,127))
+  ) :
+  // Noise Level -> CC 28  
+  nrpn_number == 32 ? (
+    midisend(offset,msg,28,linlin(nrpn_value,0,127,0,127))
+  ) :
+  // Detune -> CC 29
+  nrpn_number == 33 ? (
+    midisend(offset,msg,29,linlin(nrpn_value,0,127,0,127))
+  ) :
+  // Filter Freq -> CC 30
+  nrpn_number == 45 ? (
+    midisend(offset,msg,30,linlin(nrpn_value,0,164,0,127))
+  ) :
+  // Filter Res -> CC 31
+  nrpn_number == 46 ? (
+    midisend(offset,msg,31,linlin(nrpn_value,0,255,0,127))
+  ) :
+  // Filter Mode -> CC 85
+  nrpn_number == 49 ? (
+    midisend(offset,msg,85,linlin(nrpn_value,0,127,0,127))
+  ) :
+  // Program Volume -> CC 86
+  nrpn_number == 62 ? (
+    midisend(offset,msg,86,linlin(nrpn_value,0,127,0,127))
+  ) :
+  // Pan Spread -> CC 87
+  nrpn_number == 63 ? (
+    midisend(offset,msg,87,linlin(nrpn_value,0,127,0,127))
+  ) :
+  // Distortion Amount -> CC 88
+  nrpn_number == 64 ? (
+    midisend(offset,msg,88,linlin(nrpn_value,0,127,0,127))
+  ) :
+  // Loudness Env Amount -> CC 89
+  nrpn_number == 66 ? (
+    midisend(offset,msg,89,linlin(nrpn_value,0,127,0,127))
+  ) :
+  // Loudness Env Attack -> CC 90
+  nrpn_number == 67 ? (
+    midisend(offset,msg,90,linlin(nrpn_value,0,127,0,127))
+  ) :
+  // Loudness Env Decay -> CC 102
+  nrpn_number == 68 ? (
+    midisend(offset,msg,102,linlin(nrpn_value,0,127,0,127))
+  ) :
+  // Loudness Env Sustain -> CC 103
+  nrpn_number == 69 ? (
+    midisend(offset,msg,103,linlin(nrpn_value,0,127,0,127))
+  ) :
+  // Loudness Env Release -> CC 104
+  nrpn_number == 70 ? (
+    midisend(offset,msg,104,linlin(nrpn_value,0,127,0,127))
+  ) :
+  // Filter Env Amount -> CC 105
+  nrpn_number == 77 ? (
+    midisend(offset,msg,105,linlin(nrpn_value,0,254,0,127))
+  ) :
+  // Filter Env Attack -> CC 106
+  nrpn_number == 78 ? (
+    midisend(offset,msg,106,linlin(nrpn_value,0,127,0,127))
+  ) :
+  // Filter Env Decay -> CC 107
+  nrpn_number == 79 ? (
+    midisend(offset,msg,107,linlin(nrpn_value,0,127,0,127))
+  ) :
+  // Filter Env Sustain -> CC 108
+  nrpn_number == 80 ? (
+    midisend(offset,msg,108,linlin(nrpn_value,0,127,0,127))
+  ) :
+  // Filter Env Release -> CC 109
+  nrpn_number == 81 ? (
+    midisend(offset,msg,109,linlin(nrpn_value,0,127,0,127))
+  ) :
+  // LFO Freq -> CC 110
+  nrpn_number == 88 ? (
+    midisend(offset,msg,110,linlin(nrpn_value,0,254,0,127))
+  ) :
+  // LFO Initial Amount -> CC 111
+  nrpn_number == 89 ? (
+    midisend(offset,msg,111,linlin(nrpn_value,0,255,0,127))
+  ) :
+  // FX1 Mix -> CC 112
+  nrpn_number == 120 ? (
+    midisend(offset,msg,112,linlin(nrpn_value,0,127,0,127))
+  ) :
+  // FX1 Param 1 -> CC 113
+  nrpn_number == 121 ? (
+    midisend(offset,msg,113,linlin(nrpn_value,0,255,0,127))
+  ) :
+  // FX1 Param 2 -> CC 114
+  nrpn_number == 122 ? (
+    midisend(offset,msg,114,linlin(nrpn_value,0,127,0,127))
+  ) :
+  // FX2 Mix -> CC 115
+  nrpn_number == 128 ? (
+    midisend(offset,msg,115,linlin(nrpn_value,0,127,0,127))
+  ) :
+  // FX2 Param 1 -> CC 116
+  nrpn_number == 129 ? (
+    midisend(offset,msg,116,linlin(nrpn_value,0,255,0,127))
+  ) :
+  // FX2 Param 2 -> CC 117
+  nrpn_number == 130 ? (
+    midisend(offset,$xB0,117,linlin(nrpn_value,0,127,0,127))
+  ) :
+  // XMod Filter Env Amount -> CC 118
+  nrpn_number == 143 ? (
+    midisend(offset,msg,118,linlin(nrpn_value,0,254,0,127))
+  ) :
+  // XMod VCO2 Amount -> CC 119
+  nrpn_number == 144 ? (
+    midisend(offset,msg,119,linlin(nrpn_value,0,254,0,127))
+  ) :
+  // Unison On/Off -> CC 8
+  nrpn_number == 156 ? (
+    midisend(offset,msg,8,linlin(nrpn_value,0,1,0,127))
+  )
+);
+
+// process midi coming from OB6
+// returns 0 if it is processing NRPN values, 1 otherwise
+function process_midi_message(offset,msg1,msg2,msg3)
+(
+  state == 0 || state == 4 ? (
+    (msg1 & $xF0 == $xB0) && (msg2 == $x63) ? (
+      nrpn_number = msg3 << 7;
+      state = 1;
+      0
+    ) : (
+      state = 0;
+      1
+    );
+  ) :
+  state == 1 ? (
+    (msg1 & $xF0 == $xB0) && (msg2 == $x62) ? (
+      nrpn_number = nrpn_number + msg3;
+      state = 2;
+      0
+    ) : (
+      state = 0;
+      1
+    );
+  ) : 
+  state == 2 ? (
+    (msg1 & $xF0 == $xB0) && (msg2 == $x06) ? (
+      nrpn_value = msg3 << 7;
+      state = 3;
+      0
+    ) : (
+      state = 0;
+      1
+    );
+  ) : 
+  state == 3 ? (
+    (msg1 & $xF0 == $xB0) && (msg2 == $x26) ? (
+      nrpn_value = nrpn_value + msg3;
+      state = 4;
+      channel = msg1 & $x0F;
+      send_right_midi_cc(offset,channel,nrpn_number,nrpn_value);
+      0
+    ) : (
+      state = 0;
+      1
+    );
+  ) : 
+  1
+);
+
+@block
+while (midirecv(offset,msg1,msg2,msg3)) (
+  process_midi_message(offset,msg1,msg2,msg3) == 1 ? (
+    midisend(offset,msg1,msg2,msg3); // passthrough other events
+  );
+);
+
+
